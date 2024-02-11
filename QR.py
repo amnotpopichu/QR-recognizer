@@ -15,8 +15,14 @@ while True:
         if ret_qr:
             for s, p in zip(decoded_info, points):
                 color = (0, 255, 0)
-                print(p.astype(int)[1][1])
-                print("\n")
+                #0,0 gives x of verticy 1
+                #remeber your ranges and it starrts at 0 lol
+                if 500>p.astype(int)[0][0]>200 and 500>p.astype(int)[0][1]>200 and 500>p.astype(int)[1][0]>200 and 500>p.astype(int)[1][1]>200 and 500>p.astype(int)[2][0]>200 and 500>p.astype(int)[2][1]>200 and 500>p.astype(int)[3][0]>200 and 500>p.astype(int)[3][1]>200:
+                    frame = cv2.putText(frame, "inside", (200,100), cv2.FONT_HERSHEY_SIMPLEX,  
+                            1, (0,0,255), 2, cv2.LINE_AA) 
+                else:
+                    frame = cv2.putText(frame, "outside", (200,100), cv2.FONT_HERSHEY_SIMPLEX,  
+                            1, (0,0,255), 2, cv2.LINE_AA) 
                 
 
                 frame = cv2.polylines(frame, [p.astype(int)], True, color, 8)
