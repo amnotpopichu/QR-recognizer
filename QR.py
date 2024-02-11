@@ -12,6 +12,8 @@ corner1x=200
 corner1y=200
 corner2x=500
 corner2y=500
+targetcenterx=(corner1x+corner2x)/2
+targetcentery=(corner1y+corner2y)/2
 qcd = cv2.QRCodeDetector()
 cap = cv2.VideoCapture(camera_id)
 while True:
@@ -24,7 +26,10 @@ while True:
             for s, p in zip(decoded_info, points):
                 color = (0, 255, 0)
                 values = p.astype(int)
-
+                centerx = (int(values[0][0])+int(values[1][0]))/2
+                centery = (int(values[0][1])+int(values[1][1]))/2
+                frame = cv2.putText(frame, str(centerx-targetcenterx), (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                frame = cv2.putText(frame, str(centery-targetcentery), (500, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
                 # Updated condition order
                 if any(values[i][0] < corner1x or values[i][0] > corner2x or values[i][1] < corner1y or values[i][1] > corner2y for i in range(4)):
                     frame = cv2.putText(frame, "outside", (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
