@@ -1,3 +1,8 @@
+#Calibration- use center to align but when autonomous must disable and 
+#override other commands otherwise error doesn’t register, use centers, minus
+# need move right, positive need move left. Align inside function SHOULD NOT take president over center aligning.
+
+
 import numpy as np
 import cv2
 #end goal
@@ -21,15 +26,28 @@ while True:
 
     if ret:
         ret_qr, decoded_info, points, _ = qcd.detectAndDecodeMulti(frame)
-        
+        #TODO FIX Y VALUE
         if ret_qr:
             for s, p in zip(decoded_info, points):
                 color = (0, 255, 0)
                 values = p.astype(int)
                 centerx = (int(values[0][0])+int(values[1][0]))/2
                 centery = (int(values[0][1])+int(values[1][1]))/2
-                frame = cv2.putText(frame, str(centerx-targetcenterx), (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-                frame = cv2.putText(frame, str(centery-targetcentery), (500, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                if centerx-targetcenterx<0:
+                    frame = cv2.putText(frame, "move right", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                elif centerx-targetcenterx>0:
+                    frame = cv2.putText(frame, "move left", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                else:
+                    frame = cv2.putText(frame, "x value aligned", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                if centery-targetcentery<0:
+                    frame = cv2.putText(frame, "move down", (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                elif centery-targetcentery>0:
+                    frame = cv2.putText(frame, "move up", (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                else:
+                    frame = cv2.putText(frame, "y value aligned", (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+
+                frame = cv2.putText(frame, str(centerx-targetcenterx), (600, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                frame = cv2.putText(frame, str(centery-targetcentery), (600, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
                 # Updated condition order
                 if any(values[i][0] < corner1x or values[i][0] > corner2x or values[i][1] < corner1y or values[i][1] > corner2y for i in range(4)):
                     frame = cv2.putText(frame, "outside", (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
