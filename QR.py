@@ -8,7 +8,10 @@ import cv2
 camera_id = 0
 delay = 1
 window_name = 'OpenCV QR Code'
-
+corner1x=200
+corner1y=200
+corner2x=500
+corner2y=500
 qcd = cv2.QRCodeDetector()
 cap = cv2.VideoCapture(camera_id)
 while True:
@@ -23,19 +26,19 @@ while True:
                 values = p.astype(int)
 
                 # Updated condition order
-                if any(values[i][0] < 200 or values[i][0] > 500 or values[i][1] < 200 or values[i][1] > 500 for i in range(4)):
+                if any(values[i][0] < corner1x or values[i][0] > corner2x or values[i][1] < corner1y or values[i][1] > corner2y for i in range(4)):
                     frame = cv2.putText(frame, "outside", (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-                elif any(300 < values[i][0] < 400 and 300 < values[i][1] < 400 for i in range(4)):
-                    #move closer currently only checks if its inside that small box, so if its super far away but aligned perfectly, it will think its inside
-                    #to be fixed
-                    frame = cv2.putText(frame, "move closer", (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                elif not any(corner2x-50>values[i][0] > corner1x+50 and corner2y-50>values[i][1] > corner1y+50 for i in range(4)):
+                    frame = cv2.putText(frame, "aligned", (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+
                 else:
                     frame = cv2.putText(frame, "inside", (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
 
                 frame = cv2.polylines(frame, [p.astype(int)], True, color, 8)
-    
-    frame = cv2.rectangle(frame, (200, 200), (500, 500), (0, 0, 255), 8)
+    frame = cv2.rectangle(frame, (corner1x+50, corner1y+50), (corner2x-50, corner2y-50), (0, 0, 255), 8)
+
+    frame = cv2.rectangle(frame, (corner1x, corner1y), (corner2x, corner2y), (0, 0, 255), 8)
     cv2.imshow(window_name, frame)
 
     if cv2.waitKey(delay) & 0xFF == ord('q'):
