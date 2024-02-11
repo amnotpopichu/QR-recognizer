@@ -11,7 +11,6 @@ window_name = 'OpenCV QR Code'
 
 qcd = cv2.QRCodeDetector()
 cap = cv2.VideoCapture(camera_id)
-
 while True:
     ret, frame = cap.read()
 
@@ -35,9 +34,9 @@ while True:
 
 
                 frame = cv2.polylines(frame, [p.astype(int)], True, color, 8)
-            
-            frame = cv2.rectangle(frame, (200, 200), (500, 500), (0, 0, 255), 8)
-            cv2.imshow(window_name, frame)
+    
+    frame = cv2.rectangle(frame, (200, 200), (500, 500), (0, 0, 255), 8)
+    cv2.imshow(window_name, frame)
 
     if cv2.waitKey(delay) & 0xFF == ord('q'):
         break
