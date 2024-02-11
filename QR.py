@@ -4,7 +4,7 @@ import cv2
 #get robot to move by itself and align nicly
 #then work with the other 3 qr codes (ftc)
 
-
+#https://note.nkmk.me/en/python-opencv-qrcode/
 camera_id = 0
 delay = 1
 window_name = 'OpenCV QR Code'
