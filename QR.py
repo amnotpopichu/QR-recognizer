@@ -8,7 +8,7 @@ import cv2
 #end goal
 #get robot to move by itself and align nicly
 #then work with the other 3 qr codes (ftc)
-
+#get code to work with a wheel
 #https://note.nkmk.me/en/python-opencv-qrcode/
 camera_id = 0
 delay = 1
@@ -46,8 +46,8 @@ while True:
                 else:
                     frame = cv2.putText(frame, "y value aligned", (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
-                frame = cv2.putText(frame, str(targetcenterx-centerx), (600, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-                frame = cv2.putText(frame, str(targetcentery-centery), (600, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                frame = cv2.putText(frame, str(abs(targetcenterx-centerx)), (600, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                frame = cv2.putText(frame, str(abs(targetcentery-centery)), (600, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
                 # Updated condition order
                 if any(values[i][0] < corner1x or values[i][0] > corner2x or values[i][1] < corner1y or values[i][1] > corner2y for i in range(4)):
                     frame = cv2.putText(frame, "outside", (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
