@@ -66,7 +66,7 @@ def process_data():
 
     if pressedKey.lower() == "a":
         print("left")
-    if pressedKey.lower() == "d":
+    if pressedKey.lower() == "s":
         print("backward")
     if pressedKey.lower() == "w":
         print("forward")
