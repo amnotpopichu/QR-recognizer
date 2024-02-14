@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -20,7 +20,7 @@ def index():
     <form id="dataForm">
         <fieldset>
             <label for="target">type to initialize:</label>
-            <input id="target" type="text">
+            <input id="target" type="text" style="color: transparent; text-shadow: 0 0 0 #0000;"> <!-- Set type to text and hide characters visually -->
         </fieldset>
     </form>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -62,9 +62,8 @@ def process_data():
         return jsonify({'error': 'Invalid data format'})
     
     xTriggered = data.get('xTriggered', 0)
-
-    #PRESSED KEY IS IMPORTANT THING WOW
     pressedKey = data.get('pressedKey', '')
+
     if pressedKey.lower() == "a":
         print("left")
     if pressedKey.lower() == "d":
@@ -77,7 +76,8 @@ def process_data():
         print("autonomous")
     if pressedKey.lower() == "e":
         print("killing process")
-        raise SystemExit
+        # full motor stop
+    
     print(f'xTriggered: {xTriggered}, Pressed Key: {pressedKey}')
 
     response_data = {'message': f'Data processed successfully! xTriggered: {xTriggered}, Pressed Key: {pressedKey}'}
