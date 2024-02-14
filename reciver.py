@@ -4,6 +4,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "OPTIONS"])
 
+xTriggered = 0  # Declare xTriggered globally
+
 @app.route('/')
 def index():
     return """<!DOCTYPE html>
@@ -29,25 +31,56 @@ def index():
                 event.preventDefault();
             }
             xTriggered++;
-            var msg = "Handler for `keydown` called " + xTriggered + " time(s).";
+            var pressedKey = String.fromCharCode(event.which); // Get the pressed key
+            var msg = "Handler for `keydown` called " + xTriggered + " time(s). Pressed Key: " + pressedKey;
             console.log(msg);
             console.log(event);
+
+            // Now, send the xTriggered value and pressedKey to the server
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({'xTriggered': xTriggered, 'pressedKey': pressedKey}),
+                dataType: 'json',
+                url: '/process_data',
+                success: function (data) {
+                    console.log('Server Response:', data);
+                }
+            });
         });
     </script>
 </body>
 </html>
 """
+
 @app.route('/process_data', methods=['POST'])
 def process_data():
+    global xTriggered  # Access the global variable
     data = request.get_json()
 
-    if not data or 'user_input' not in data:
+    if not data or 'xTriggered' not in data or 'pressedKey' not in data:
         return jsonify({'error': 'Invalid data format'})
-    #user_input used for movement
-    user_input = data.get('user_input', '')
-    print(f'User Input: {user_input}')
+    
+    xTriggered = data.get('xTriggered', 0)
 
-    response_data = {'message': f'Data processed successfully! User input: {user_input}'}
+    #PRESSED KEY IS IMPORTANT THING WOW
+    pressedKey = data.get('pressedKey', '')
+    if pressedKey.lower() == "a":
+        print("left")
+    if pressedKey.lower() == "d":
+        print("backward")
+    if pressedKey.lower() == "w":
+        print("forward")
+    if pressedKey.lower() == "d":
+        print("right")
+    if pressedKey.lower() == "q":
+        print("autonomous")
+    if pressedKey.lower() == "e":
+        print("killing process")
+        raise SystemExit
+    print(f'xTriggered: {xTriggered}, Pressed Key: {pressedKey}')
+
+    response_data = {'message': f'Data processed successfully! xTriggered: {xTriggered}, Pressed Key: {pressedKey}'}
     print(response_data)  # Add this line for debugging
     return jsonify(response_data)
 
