@@ -31,7 +31,6 @@ def gen_frames():  # generate frame by frame from camera
                     values = p.astype(int)
                     centerx = (int(values[0][0]) + int(values[1][0])) / 2
                     centery = (int(values[0][1]) + int(values[1][1])) / 2
-
                     if targetcenterx - centerx < 0:
                         text = "move left"
                     elif targetcenterx - centerx > 0:
@@ -41,14 +40,16 @@ def gen_frames():  # generate frame by frame from camera
 
                     frame = cv2.putText(frame, text, (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
-                    if targetcentery < 0:
+                    if targetcentery-centery < 0:
                         text = "move up"
-                    elif targetcentery > 0:
+                    elif targetcentery-centery > 0:
                         text = "move down"
                     else:
                         text = "y value aligned"
 
                     frame = cv2.putText(frame, text, (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                    frame = cv2.rectangle(frame, (int(centerx),int(centery)), (int(centerx)+10,int(centery)+10), color=(255, 0, 0), thickness=10)
+
 
                     frame = cv2.putText(frame, str(abs(targetcenterx - centerx)), (600, 100), cv2.FONT_HERSHEY_SIMPLEX,
                                         1, (0, 0, 255), 2, cv2.LINE_AA)

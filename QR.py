@@ -38,10 +38,10 @@ while True:
                     frame = cv2.putText(frame, "move right", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
                 else:
                     frame = cv2.putText(frame, "x value aligned", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-                if targetcentery<0:
-                    frame = cv2.putText(frame, "move up", (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-                elif targetcentery>0:
-                    frame = cv2.putText(frame, "move down", (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                if targetcentery-centery < 0:
+                        text = "move up"
+                elif targetcentery-centery > 0:
+                    text = "move down"
                 else:
                     frame = cv2.putText(frame, "y value aligned", (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
