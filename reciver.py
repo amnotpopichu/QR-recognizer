@@ -11,16 +11,18 @@ def index():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML to Python</title>
+    <title>input</title>
 </head>
 <body>
-    <h1>Hello, HTML to Python!</h1>
-    <form id="dataForm" method="POST">
-        <label for="user_input">Enter your data:</label>
-        <input type="text" id="user_input" name="user_input" required>
-        <button type="submit">Submit Data</button>
+    <h1>input</h1>
+    <form>
+    <fieldset>
+        <label for="target">type to intialize:</label>
+        <input id="target" type="text">
+    </fieldset>
     </form>
-    
+<script type="text/javascript" src="/resources/events.js"></script>
+    <script src="jquery-3.7.1.js"></script>
     <script>
         function submitData() {
             const userInput = document.getElementById('user_input').value;
@@ -52,6 +54,12 @@ def index():
             event.preventDefault();
             submitData();
         });
+
+        
+        
+
+
+
     </script>
     
 </body>
@@ -62,7 +70,7 @@ def process_data():
 
     if not data or 'user_input' not in data:
         return jsonify({'error': 'Invalid data format'})
-
+    #user_input used for movement
     user_input = data.get('user_input', '')
     print(f'User Input: {user_input}')
 
