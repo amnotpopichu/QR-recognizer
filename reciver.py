@@ -11,10 +11,10 @@ def index():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML to Python</title>
+    <title>input control</title>
 </head>
 <body>
-    <h1>Hello, HTML to Python!</h1>
+    <h1></h1>
     <form id="dataForm" method="POST">
         <label for="user_input">Enter your data:</label>
         <input type="text" id="user_input" name="user_input" required>
