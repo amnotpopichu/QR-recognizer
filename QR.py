@@ -26,7 +26,6 @@ while True:
 
     if ret:
         ret_qr, decoded_info, points, _ = qcd.detectAndDecodeMulti(frame)
-        #TODO FIX Y VALUE CENTER 
         if ret_qr:
             for s, p in zip(decoded_info, points):
                 color = (0, 255, 0)
@@ -64,6 +63,7 @@ while True:
     frame = cv2.rectangle(frame, (corner1x+50, corner1y+50), (corner2x-50, corner2y-50), (0, 0, 255), 8)
 
     frame = cv2.rectangle(frame, (corner1x, corner1y), (corner2x, corner2y), (0, 0, 255), 8)
+
     cv2.imshow(window_name, frame)
 
     if cv2.waitKey(delay) & 0xFF == ord('q'):
