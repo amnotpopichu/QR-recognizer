@@ -15,55 +15,28 @@ def index():
 </head>
 <body>
     <h1>input</h1>
-    <form>
-    <fieldset>
-        <label for="target">type to intialize:</label>
-        <input id="target" type="text">
-    </fieldset>
+    <form id="dataForm">
+        <fieldset>
+            <label for="target">type to initialize:</label>
+            <input id="target" type="text">
+        </fieldset>
     </form>
-<script type="text/javascript" src="/resources/events.js"></script>
-    <script src="jquery-3.7.1.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
-        function submitData() {
-            const userInput = document.getElementById('user_input').value;
-            fetch('http://127.0.0.1:5000/process_data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                },
-                body: JSON.stringify({ user_input: userInput }),
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-                // Handle the response as needed
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
-    
-        // Prevent form submission and call submitData() instead
-        document.getElementById('dataForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            submitData();
+        var xTriggered = 0;
+        $("#target").on("keydown", function (event) {
+            if (event.which == 13) {
+                event.preventDefault();
+            }
+            xTriggered++;
+            var msg = "Handler for `keydown` called " + xTriggered + " time(s).";
+            console.log(msg);
+            console.log(event);
         });
-
-        
-        
-
-
-
     </script>
-    
 </body>
-</html>"""
+</html>
+"""
 @app.route('/process_data', methods=['POST'])
 def process_data():
     data = request.get_json()
