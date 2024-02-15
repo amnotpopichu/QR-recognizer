@@ -4,9 +4,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "OPTIONS"])
 
-xTriggered = 0  # Declare xTriggered globally
+xTriggered = 0  
 autonomous = False
-prev_turn_direction = None  # Variable to store the previous turning state
 
 @app.route('/')
 def index():
@@ -38,7 +37,7 @@ def index():
         var pressedKey = String.fromCharCode(event.which);
         console.log("Handler for `keydown` called " + xTriggered + " time(s). Pressed Key: " + pressedKey);
 
-        // Now, send the xTriggered value and pressedKey to the server
+//post presseed keys
         $.ajax({
             type: 'POST',
             contentType: 'application/json;charset=UTF-8',
@@ -51,12 +50,12 @@ def index():
         });
     });
 
-    // Check gamepad support
+//check if controllers exist
     if ('getGamepads' in navigator) {
         // Set the dead zone threshold
         var threshold = 0.2;
 
-        // Start the gamepad detection loop
+        
         window.setInterval(function () {
             var gamepads = navigator.getGamepads();
 
@@ -68,7 +67,7 @@ def index():
                                 gamepad.index, gamepad.id,
                                 gamepad.buttons.length, gamepad.axes.length);
 
-                    // Handle button presses
+                    // button presses
                     gamepad.buttons.forEach(function (button, index) {
                         if (button.pressed) {
                             // Send button index to the server
@@ -85,15 +84,14 @@ def index():
                         }
                     });
 
-                    // Handle analog stick input with dead zone
+                    // axes to move
                     var xAxis = gamepad.axes[0];
                     var yAxis = gamepad.axes[1];
 
-                    // Apply dead zone
+                    //deadzone
                     xAxis = Math.abs(xAxis) < threshold ? 0 : xAxis;
                     yAxis = Math.abs(yAxis) < threshold ? 0 : yAxis;
 
-                    // Round to the 100th decimal place
                     xAxis = Math.round(xAxis * 100) / 100;
                     yAxis = Math.round(yAxis * 100) / 100;
                     console.log(xAxis)
@@ -126,7 +124,7 @@ def index():
 @app.route('/process_data', methods=['POST'])
 def process_data():
 
-    global xTriggered, autonomous  # Access the global variables
+    global xTriggered, autonomous
     data = request.get_json()
 
     if not data or 'xTriggered' not in data or 'pressedKey' not in data:
@@ -136,14 +134,14 @@ def process_data():
     pressedKey = data.get('pressedKey', '')
 
 
-
-    # Handle keyboard input
+    #keyboard input
     handle_keyboard_input(pressedKey)
-
+    #can remove but is currentlly for debug
     print(f'xTriggered: {xTriggered}, Pressed Key: {pressedKey}')
 
     response_data = {'message': f'Data processed successfully! xTriggered: {xTriggered}, Pressed Key: {pressedKey}'}
-    print(response_data)  # Add this line for debugging
+    #removed for lack of use
+    #print(response_data)  
     return jsonify(response_data)
 
 @app.route('/process_controller_button', methods=['POST'])
@@ -152,14 +150,13 @@ def process_controller_button():
 
     if not data or 'buttonIndex' not in data:
         return jsonify({'error': 'Invalid data format'})
-
+    #button input (controller)
     button_index = data.get('buttonIndex', 0)
 
-    # Handle controller button input
     handle_controller_input(button_index)
 
     response_data = {'message': f'Controller button processed successfully! Button Index: {button_index}'}
-    print(response_data)
+    #print(response_data)
     return jsonify(response_data)
 
 @app.route('/process_turning', methods=['POST'])
@@ -172,15 +169,14 @@ def process_turning():
 
     turn_direction = data.get('xAxis', '')
     degree = abs(turn_direction)*360
+    #currently keeping for debug
     print(degree)
     print(turn_direction)
     if turn_direction < 0:
         turn_direction = "left"
     elif turn_direction >0:
         turn_direction = "right"
-
-
-    # Handle turning based on the received direction and degree
+    #turn_direction = left/right degree = deg of turn
     handle_turning(turn_direction, degree)
 
     return jsonify({'message': 'Success'})
@@ -188,54 +184,62 @@ def process_turning():
 def reset():
     global autonomous
     autonomous = False
+    #motor stop
     pass
 
 def autonomous_toggle(state):
     global autonomous
     if state:
         print("Stopping autonomous")
-        autonomous = False
+        reset()
     else:
         print("Starting autonomous")
+        reset()
         autonomous = True
+        #activate auto stuff 
 
 def forward():
+    global autonomous
     if autonomous != True:
-        #movzies
+        #all motors forward
         pass
 
 def left(deg):
-        if autonomous != True:
-
-           pass
+    global autonomous
+    if autonomous != True:
+        #right motors full forward
+        #left motors full backward (time based on angles)
+        pass
 
 def right(deg):
-        if autonomous != True:
-
-         pass
+    global autonomous
+    if autonomous != True:
+        #right motors full back
+        #left motors full forward (time based on angles)
+        pass
 
 def backwards():
-        if autonomous != True:
-
-            pass
+    global autonomous
+    if autonomous != True:
+        #all motors backward
+        pass
 
 def handle_keyboard_input(pressedKey):
     global autonomous
-    # Handle keyboard input based on the pressed key
     if pressedKey.lower() == "a":
-        print("left")
+        print("moving left")
         left(10)
     elif pressedKey.lower() == "s":
-        print("backward")
+        print("moving backward")
         backwards()
     elif pressedKey.lower() == "w":
-        print("forward")
+        print("moving forward")
         forward()
     elif pressedKey.lower() == "d":
-        print("right")
+        print("moving right")
         right(10)
     elif pressedKey.lower() == "q":
-        print("Toggle autonomous")
+        print("toggling autonomous")
         autonomous_toggle(autonomous)
 
     elif pressedKey.lower() == "e":
@@ -245,35 +249,33 @@ def handle_keyboard_input(pressedKey):
 
 def handle_controller_input(button_index):
     global autonomous
-
-    # Handle controller input based on the button index
+    #buttons wow
     print(f'Button pressed: {button_index}')
     if button_index == 7:
-        print("forward")
+        print("moving forward")
         forward()
     elif button_index == 6:
-        print("backwards")
+        print("moving backwards")
         backwards()
     elif button_index == 10:
         print("resetting")   
         reset()
     elif button_index == 11:
-        print("autonomous")   
+        print("toggling autonomous")   
         autonomous_toggle(autonomous)
 
 def handle_turning(turn_direction, degree):
-    # Handle turning based on the received direction and degree
     global autonomous
+    #turn direction = left/right
+    #deg = how many deg in that direciton
     if turn_direction == 'right':
-        degree = round(degree, 2)  # Round to the 100th decimal place
+        degree = round(degree, 2)  
         print(f'Turning right at {degree} degrees')
         right(degree)
-        # Add your logic for turning right
     elif turn_direction == 'left':
-        degree = round(degree, 2)  # Round to the 100th decimal place
-        left(degree)
+        degree = round(degree, 2)  # round 2 places
         print(f'Turning left at {degree} degrees')
-        # Add your logic for turning left
+        left(degree)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
