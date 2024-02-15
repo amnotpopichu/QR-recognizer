@@ -19,7 +19,7 @@ qcd = cv2.QRCodeDetector()
 cap = cv2.VideoCapture(camera_id)
 def gen_frames():  # generate frame by frame from camera
     while True:
-        # Capture frame-by-frame
+
         success, frame = cap.read()  # read the camera frame
         if not success:
             break

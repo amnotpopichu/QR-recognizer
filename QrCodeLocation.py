@@ -48,7 +48,7 @@ while True:
 
                 frame = cv2.putText(frame, str(abs(targetcenterx-centerx)), (600, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
                 frame = cv2.putText(frame, str(abs(targetcentery-centery)), (600, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-                # Updated condition order
+
                 if any(values[i][0] < corner1x or values[i][0] > corner2x or values[i][1] < corner1y or values[i][1] > corner2y for i in range(4)):
                     frame = cv2.putText(frame, "outside", (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
                 elif not any(corner2x-50>values[i][0] > corner1x+50 and corner2y-50>values[i][1] > corner1y+50 for i in range(4)):

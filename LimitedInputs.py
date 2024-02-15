@@ -4,7 +4,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "OPTIONS"])
 
-xTriggered = 0  # Declare xTriggered globally
+xTriggered = 0  
 
 @app.route('/')
 def index():
@@ -31,12 +31,12 @@ def index():
                 event.preventDefault();
             }
             xTriggered++;
-            var pressedKey = String.fromCharCode(event.which); // Get the pressed key
+            var pressedKey = String.fromCharCode(event.which); // get key pressed
             var msg = "Handler for `keydown` called " + xTriggered + " time(s). Pressed Key: " + pressedKey;
             console.log(msg);
             console.log(event);
 
-            // Now, send the xTriggered value and pressedKey to the server
+            //sendinputs
             $.ajax({
                 type: 'POST',
                 contentType: 'application/json;charset=UTF-8',
@@ -55,7 +55,7 @@ def index():
 
 @app.route('/process_data', methods=['POST'])
 def process_data():
-    global xTriggered  # Access the global variable
+    global xTriggered  
     data = request.get_json()
 
     if not data or 'xTriggered' not in data or 'pressedKey' not in data:
@@ -81,7 +81,7 @@ def process_data():
     print(f'xTriggered: {xTriggered}, Pressed Key: {pressedKey}')
 
     response_data = {'message': f'Data processed successfully! xTriggered: {xTriggered}, Pressed Key: {pressedKey}'}
-    print(response_data)  # Add this line for debugging
+    print(response_data)  # debug
     return jsonify(response_data)
 
 if __name__ == '__main__':

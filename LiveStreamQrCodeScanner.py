@@ -14,8 +14,8 @@ qcd = cv2.QRCodeDetector()
 cap = cv2.VideoCapture(camera_id)
 def gen_frames():  # generate frame by frame from camera
     while True:
-        # Capture frame-by-frame
-        success, frame = cap.read()  # read the camera frame
+        # Capture frame by frame gen
+        success, frame = cap.read() 
         if not success:
             break
         else:
@@ -79,7 +79,6 @@ def gen_frames():  # generate frame by frame from camera
 
 @app.route('/video_feed')
 def video_feed():
-    #Video streaming route. Put this in the src attribute of an img tag
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
