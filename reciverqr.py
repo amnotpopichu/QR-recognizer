@@ -184,4 +184,4 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
 
     # Start Flask app in the main thread
-    app.run(debug=False)
+    app.run(host='0.0.0.0', debug=True)

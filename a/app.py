@@ -5,7 +5,6 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "OPTIONS"])
 
 xTriggered = 0  # Declare xTriggered globally
-console_input = ""  # Variable to store console input
 
 @app.route('/')
 def index():
@@ -14,59 +13,75 @@ def index():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Racing Wheel Input</title>
+    <title>Input</title>
 </head>
 <body>
-    <h1>Racing Wheel Input</h1>
+    <h1>Input</h1>
     <form id="dataForm">
         <fieldset>
-            <label for="target">Turn the racing wheel:</label>
+            <label for="target">Type to Initialize:</label>
             <input id="target" type="text" style="color: transparent; text-shadow: 0 0 0 #0000;">
         </fieldset>
     </form>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
         var xTriggered = 0;
-
-        // Function to handle racing wheel input
-        function handleRacingWheelInput(event) {
+        $("#target").on("keydown", function (event) {
+            if (event.which == 13) {
+                event.preventDefault();
+            }
             xTriggered++;
-            var rotationValue = event.gamepad.axes[0]; // Use the first axis for rotation
+            var pressedKey = String.fromCharCode(event.which);
+            console.log("Handler for `keydown` called " + xTriggered + " time(s). Pressed Key: " + pressedKey);
 
-            // Send racing wheel input data to the server
+            // Now, send the xTriggered value and pressedKey to the server
             $.ajax({
                 type: 'POST',
                 contentType: 'application/json;charset=UTF-8',
-                data: JSON.stringify({'xTriggered': xTriggered, 'rotationValue': rotationValue}),
+                data: JSON.stringify({'xTriggered': xTriggered, 'pressedKey': pressedKey}),
                 dataType: 'json',
                 url: '/process_data',
                 success: function (data) {
                     console.log('Server Response:', data);
-                    document.getElementById('consoleOutput').innerText = data.message;  // Display the message in the browser
                 }
             });
-        }
-
-        // Attach event listener to capture racing wheel input
-        window.addEventListener("gamepadconnected", function (e) {
-            console.log("Racing wheel connected!");
-
-            // Add event listener for gamepad input
-            window.addEventListener("gamepadinput", handleRacingWheelInput);
         });
-        
+
+        // Add code to handle controller input
+        window.addEventListener("gamepadconnected", function(e) {
+            var gamepad = e.gamepad;
+            console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+                        gamepad.index, gamepad.id,
+                        gamepad.buttons.length, gamepad.axes.length);
+
+            // Handle button presses
+            window.setInterval(function() {
+                var buttons = navigator.getGamepads()[0].buttons;
+                buttons.forEach(function(button, index) {
+                    if (button.pressed) {
+                        // Send button index to the server
+                        $.ajax({
+                            type: 'POST',
+                            contentType: 'application/json;charset=UTF-8',
+                            data: JSON.stringify({'buttonIndex': index}),
+                            dataType: 'json',
+                            url: '/process_controller_button',
+                            success: function (data) {
+                                console.log('Server Response:', data);
+                            }
+                        });
+                    }
+                });
+            }, 100);
+        });
     </script>
-    <div>
-        <label>Console Output:</label>
-        <div id="consoleOutput"></div>
-    </div>
 </body>
 </html>
 """
 
 @app.route('/process_data', methods=['POST'])
 def process_data():
-    global xTriggered, console_input  # Access the global variables
+    global xTriggered  # Access the global variable
     data = request.get_json()
 
     if not data or 'xTriggered' not in data or 'pressedKey' not in data:
@@ -75,25 +90,50 @@ def process_data():
     xTriggered = data.get('xTriggered', 0)
     pressedKey = data.get('pressedKey', '')
 
-    if pressedKey.lower() == "a":
-        console_input = "left"
-    elif pressedKey.lower() == "s":
-        console_input = "backward"
-    elif pressedKey.lower() == "w":
-        console_input = "forward"
-    elif pressedKey.lower() == "d":
-        console_input = "right"
-    elif pressedKey.lower() == "q":
-        console_input = "autonomous"
-    elif pressedKey.lower() == "e":
-        console_input = "killing process"
-        # full motor stop
-    
-    print(f'xTriggered: {xTriggered}, Pressed Key: {pressedKey}, Console Input: {console_input}')
+    # Handle keyboard input
+    handle_keyboard_input(pressedKey)
 
-    response_data = {'message': f'Data processed successfully! xTriggered: {xTriggered}, Pressed Key: {pressedKey}, Console Input: {console_input}'}
+    print(f'xTriggered: {xTriggered}, Pressed Key: {pressedKey}')
+
+    response_data = {'message': f'Data processed successfully! xTriggered: {xTriggered}, Pressed Key: {pressedKey}'}
     print(response_data)  # Add this line for debugging
     return jsonify(response_data)
+
+@app.route('/process_controller_button', methods=['POST'])
+def process_controller_button():
+    data = request.get_json()
+
+    if not data or 'buttonIndex' not in data:
+        return jsonify({'error': 'Invalid data format'})
+
+    button_index = data.get('buttonIndex', 0)
+
+    # Handle controller button input
+    handle_controller_input(button_index)
+
+    response_data = {'message': f'Controller button processed successfully! Button Index: {button_index}'}
+    print(response_data)
+    return jsonify(response_data)
+
+def handle_keyboard_input(pressedKey):
+    # Handle keyboard input based on the pressed key
+    if pressedKey.lower() == "a":
+        print("left")
+    elif pressedKey.lower() == "s":
+        print("backward")
+    elif pressedKey.lower() == "w":
+        print("forward")
+    elif pressedKey.lower() == "d":
+        print("right")
+    elif pressedKey.lower() == "q":
+        print("autonomous")
+    elif pressedKey.lower() == "e":
+        print("killing process")
+        # full motor stop
+
+def handle_controller_input(button_index):
+    # Handle controller input based on the button index
+    print(f'Button pressed: {button_index}')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
