@@ -267,9 +267,11 @@ def handle_turning(turn_direction, degree):
     if turn_direction == 'right':
         degree = round(degree, 2)  # Round to the 100th decimal place
         print(f'Turning right at {degree} degrees')
+        right(degree)
         # Add your logic for turning right
     elif turn_direction == 'left':
         degree = round(degree, 2)  # Round to the 100th decimal place
+        left(degree)
         print(f'Turning left at {degree} degrees')
         # Add your logic for turning left
 
