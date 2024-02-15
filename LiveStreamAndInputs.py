@@ -13,19 +13,41 @@ corner1x=200
 corner1y=200
 corner2x=500
 corner2y=500
+margin=(corner2x-corner1x)/10
 targetcenterx=(corner1x+corner2x)/2
 targetcentery=(corner1y+corner2y)/2
 qcd = cv2.QRCodeDetector()
 cap = cv2.VideoCapture(camera_id)
+
 def gen_frames():  # generate frame by frame from camera
+    global margin, corner1x, corner1y, corner2x, corner2y
     while True:
 
         success, frame = cap.read()  # read the camera frame
+        height, width, channels = frame.shape
+        print(f"Resolution: {width}x{height}")
         if not success:
             break
         else:
             ret_qr, decoded_info, points, _ = qcd.detectAndDecodeMulti(frame)
-            frame = cv2.rectangle(frame, (corner1x+50, corner1y+50), (corner2x-50, corner2y-50), (0, 0, 255), 8)
+            #frame = cv2.rectangle(frame, (corner1x+50, corner1y+50), (corner2x-50, corner2y-50), (0, 0, 255), 8)
+            fraction = 1/6  
+
+
+            x_adjustment = fraction * (corner2x - corner1x)
+            y_adjustment = fraction * (corner2y - corner1y)
+            corner1xajust=int(corner1x + x_adjustment)
+            corner1yajust=int(corner1y + y_adjustment)
+            corner2xajust=int(corner2x - x_adjustment)
+            corner2yajust=int(corner2y - y_adjustment)
+            #minibox
+            frame = cv2.rectangle(frame, 
+                                (corner1xajust, corner1yajust), 
+                                (corner2xajust, corner2yajust), 
+                                (0, 0, 255), 8)
+
+
+            #big box
             frame = cv2.rectangle(frame, (corner1x, corner1y), (corner2x, corner2y), (0, 0, 255), 8)
 
             if ret_qr:
@@ -34,43 +56,52 @@ def gen_frames():  # generate frame by frame from camera
                     values = p.astype(int)
                     centerx = ((int(values[0][0]) + int(values[1][0]))) / 2
                     centery = ((int(values[0][1]) + int(values[3][1]))) / 2
-                    if targetcenterx - centerx < 0:
+
+                    if targetcenterx - centerx < -margin:
                         text = "move left"
-                    elif targetcenterx - centerx > 0:
+                    elif targetcenterx - centerx > margin:
                         text = "move right"
                     else:
-                        text = "x value aligned"
-
+                        text = "center x value aligned"
+                    #x value move
                     frame = cv2.putText(frame, text, (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
-                    if targetcentery-centery < 0:
+                    if targetcentery-centery < -margin:
                         text = "move up"
-                    elif targetcentery-centery > 0:
+                    elif targetcentery-centery > margin:
                         text = "move down"
                     else:
-                        text = "y value aligned"
-
+                        text = "center y value aligned"
+                    #y value move
                     frame = cv2.putText(frame, text, (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+
+                    #center of qr box
                     frame = cv2.rectangle(frame, (int(centerx),int(centery)), (int(centerx)+10,int(centery)+10), color=(255, 0, 0), thickness=10)
-
-
-                    frame = cv2.putText(frame, str(abs(targetcenterx - centerx)), (600, 100), cv2.FONT_HERSHEY_SIMPLEX,
-                                        1, (0, 0, 255), 2, cv2.LINE_AA)
-                    frame = cv2.putText(frame, str(abs(targetcentery - centery)), (600, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                                        1, (0, 0, 255), 2, cv2.LINE_AA)
-
+                    
+                    #if not so that it deonst show garbage for alinged
+                    if not -margin<=targetcenterx - centerx<=margin:
+                        frame = cv2.putText(frame, str(abs(targetcenterx - centerx)), (600, 100), cv2.FONT_HERSHEY_SIMPLEX,
+                                            1, (0, 0, 255), 2, cv2.LINE_AA)
+                    if not -margin<=targetcentery-centery<=margin:
+                        frame = cv2.putText(frame, str(abs(targetcentery - centery)), (600, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                                            1, (0, 0, 255), 2, cv2.LINE_AA)
+                    #is qr outside
                     if any(values[i][0] < corner1x or values[i][0] > corner2x or values[i][1] < corner1y or
                            values[i][1] > corner2y for i in range(4)):
                         text = "outside"
+                    #is qr aligned and inside
                     elif not any(
-                            corner2x - 50 > values[i][0] > corner1x + 50 and corner2y - 50 > values[i][1] > corner1y + 50
+                            corner2xajust > values[i][0] > corner1xajust and corner2yajust > values[i][1] > corner1yajust
                             for i in range(4)):
                         text = "aligned"
+                    #is qr inside but not aligned
                     else:
                         text = "inside"
 
+                    #text if its aligned
                     frame = cv2.putText(frame, text, (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
+                    #shows qr code polygon
                     frame = cv2.polylines(frame, [p.astype(int)], True, color, 8)
             else:
                 frame = cv2.putText(frame, "qr code not detected", (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),
@@ -378,4 +409,5 @@ def handle_turning(turn_direction, degree):
         left(degree)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    #app.run(host='0.0.0.0', debug=True)
+    app.run(debug = True)
