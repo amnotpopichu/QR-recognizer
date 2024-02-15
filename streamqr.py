@@ -12,8 +12,6 @@ targetcenterx=(corner1x+corner2x)/2
 targetcentery=(corner1y+corner2y)/2
 qcd = cv2.QRCodeDetector()
 cap = cv2.VideoCapture(camera_id)
-#  for cctv camera use rtsp://username:password@ip_address:554/user=username_password='password'_channel=channel_number_stream=0.sdp' instead of camera
-# for local webcam use cv2.VideoCapture(0)
 def gen_frames():  # generate frame by frame from camera
     while True:
         # Capture frame-by-frame
@@ -87,7 +85,7 @@ def video_feed():
 
 @app.route('/')
 def index():
-    """Video streaming home page."""
+    """livestream"""
     return render_template('index.html')
 
 
