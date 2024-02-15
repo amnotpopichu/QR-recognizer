@@ -30,20 +30,21 @@ while True:
             for s, p in zip(decoded_info, points):
                 color = (0, 255, 0)
                 values = p.astype(int)
-                centerx = (int(values[0][0])+int(values[1][0]))/2
-                centery = (int(values[0][1])+int(values[1][1]))/2
+                centerx = ((int(values[0][0]) + int(values[1][0]))) / 2
+                centery = ((int(values[0][1]) + int(values[3][1]))) / 2
                 if targetcenterx-centerx<0:
-                    frame = cv2.putText(frame, "move left", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                    text = "move left"
                 elif targetcenterx-centerx>0:
-                    frame = cv2.putText(frame, "move right", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                    text = "move right"
                 else:
-                    frame = cv2.putText(frame, "x value aligned", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                    text = "x value aligned"
                 if targetcentery-centery < 0:
-                        text = "move up"
+                    text = "move up"
                 elif targetcentery-centery > 0:
                     text = "move down"
                 else:
-                    frame = cv2.putText(frame, "y value aligned", (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                    text = 'yvalue aligned'
+                frame = cv2.rectangle(frame, (int(centerx),int(centery)), (int(centerx)+10,int(centery)+10), color=(255, 0, 0), thickness=10)
 
                 frame = cv2.putText(frame, str(abs(targetcenterx-centerx)), (600, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
                 frame = cv2.putText(frame, str(abs(targetcentery-centery)), (600, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)

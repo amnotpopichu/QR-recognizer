@@ -29,8 +29,8 @@ def gen_frames():  # generate frame by frame from camera
                 for s, p in zip(decoded_info, points):
                     color = (0, 255, 0)
                     values = p.astype(int)
-                    centerx = (int(values[0][0]) + int(values[1][0])) / 2
-                    centery = (int(values[0][1]) + int(values[1][1])) / 2
+                    centerx = ((int(values[0][0]) + int(values[1][0]))) / 2
+                    centery = ((int(values[0][1]) + int(values[3][1]))) / 2
                     if targetcenterx - centerx < 0:
                         text = "move left"
                     elif targetcenterx - centerx > 0:
@@ -92,4 +92,4 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
