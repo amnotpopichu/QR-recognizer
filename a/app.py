@@ -115,7 +115,22 @@ def process_controller_button():
     print(response_data)
     return jsonify(response_data)
 
+def motor_stop():
+    pass
+def autonomous(state):
+    #code here:
+    if state == True:
+        return False
+        #end atonomous
+    else:
+        return True
+        #start autonomous
+    pass
+
+autonomous = False
+
 def handle_keyboard_input(pressedKey):
+    global autonomous
     # Handle keyboard input based on the pressed key
     if pressedKey.lower() == "a":
         print("left")
@@ -127,13 +142,28 @@ def handle_keyboard_input(pressedKey):
         print("right")
     elif pressedKey.lower() == "q":
         print("autonomous")
+        autonomous=autonomous(autonomous)
+
     elif pressedKey.lower() == "e":
-        print("killing process")
+        print("stopping motors")
+        motor_stop()
         # full motor stop
 
 def handle_controller_input(button_index):
+    global autonomous
     # Handle controller input based on the button index
     print(f'Button pressed: {button_index}')
+    if button_index == "7":
+        print("forward")
+    elif button_index == "6":
+        print("backwards")
+    elif button_index == "10":
+        print("stopping motors")   
+        motor_stop()
+    elif button_index == "11":
+        print("autonomous")   
+        autonomous=autonomous(autonomous)
+    
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
