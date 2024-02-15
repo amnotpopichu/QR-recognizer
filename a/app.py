@@ -96,8 +96,18 @@ def index():
                     // Round to the 100th decimal place
                     xAxis = Math.round(xAxis * 100) / 100;
                     yAxis = Math.round(yAxis * 100) / 100;
-
+                    console.log(xAxis)
                     console.log('Analog Stick Values - X:', xAxis, 'Y:', yAxis);
+                    $.ajax({
+                        type: 'POST',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({'xAxis': xAxis}),
+                        dataType: 'json',
+                        url: '/process_turning'
+                        
+                        });
+                    
+
                 }
             }
         }, 100);
@@ -115,6 +125,7 @@ def index():
 
 @app.route('/process_data', methods=['POST'])
 def process_data():
+
     global xTriggered, autonomous  # Access the global variables
     data = request.get_json()
 
@@ -123,6 +134,8 @@ def process_data():
     
     xTriggered = data.get('xTriggered', 0)
     pressedKey = data.get('pressedKey', '')
+
+
 
     # Handle keyboard input
     handle_keyboard_input(pressedKey)
@@ -151,13 +164,21 @@ def process_controller_button():
 
 @app.route('/process_turning', methods=['POST'])
 def process_turning():
+    global xAxis
     data = request.get_json()
 
-    if not data or 'turnDirection' not in data or 'degree' not in data:
-        return jsonify({'error': 'Invalid data format'})
+    #if not data or 'turnDirection' not in data or 'degree' not in data:
+    #    return jsonify({'error': 'Invalid data format'})
 
-    turn_direction = data.get('turnDirection', '')
-    degree = data.get('degree', 0)
+    turn_direction = data.get('xAxis', '')
+    degree = abs(turn_direction)*360
+    print(degree)
+    print(turn_direction)
+    if turn_direction < 0:
+        turn_direction = "left"
+    elif turn_direction >0:
+        turn_direction = "right"
+
 
     # Handle turning based on the received direction and degree
     handle_turning(turn_direction, degree)
@@ -227,16 +248,16 @@ def handle_controller_input(button_index):
 
     # Handle controller input based on the button index
     print(f'Button pressed: {button_index}')
-    if button_index == "7":
+    if button_index == 7:
         print("forward")
         forward()
-    elif button_index == "6":
+    elif button_index == 6:
         print("backwards")
         backwards()
-    elif button_index == "10":
+    elif button_index == 10:
         print("resetting")   
         reset()
-    elif button_index == "11":
+    elif button_index == 11:
         print("autonomous")   
         autonomous_toggle(autonomous)
 
