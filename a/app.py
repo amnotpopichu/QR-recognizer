@@ -126,7 +126,14 @@ def autonomous(state):
         return True
         #start autonomous
     pass
-
+def forward():
+    pass
+def left(deg):
+    pass
+def right(deg):
+    pass
+def backwards():
+    pass
 autonomous = False
 
 def handle_keyboard_input(pressedKey):
@@ -134,12 +141,16 @@ def handle_keyboard_input(pressedKey):
     # Handle keyboard input based on the pressed key
     if pressedKey.lower() == "a":
         print("left")
+        left(10)
     elif pressedKey.lower() == "s":
         print("backward")
+        backwards()
     elif pressedKey.lower() == "w":
         print("forward")
+        forward()
     elif pressedKey.lower() == "d":
         print("right")
+        right(10)
     elif pressedKey.lower() == "q":
         print("autonomous")
         autonomous=autonomous(autonomous)
@@ -155,8 +166,10 @@ def handle_controller_input(button_index):
     print(f'Button pressed: {button_index}')
     if button_index == "7":
         print("forward")
+        forward()
     elif button_index == "6":
         print("backwards")
+        backwards()
     elif button_index == "10":
         print("stopping motors")   
         motor_stop()
