@@ -196,7 +196,7 @@ def index():
 </body>
 </html>
 """ 
-    return template_content + input_content
+    return input_content + template_content 
 @app.route('/process_data', methods=['POST'])
 def process_data():
 
