@@ -6,6 +6,7 @@ CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "OPTIONS"
 
 xTriggered = 0  # Declare xTriggered globally
 autonomous = False
+prev_turn_direction = None  # Variable to store the previous turning state
 
 @app.route('/')
 def index():
@@ -26,89 +27,88 @@ def index():
     </form>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
-        var xTriggered = 0;
-        $("#target").on("keydown", function (event) {
-            if (event.which == 13) {
-                event.preventDefault();
+    var xTriggered = 0;
+    var prevTurnDirection = null;
+
+    $("#target").on("keydown", function (event) {
+        if (event.which == 13) {
+            event.preventDefault();
+        }
+        xTriggered++;
+        var pressedKey = String.fromCharCode(event.which);
+        console.log("Handler for `keydown` called " + xTriggered + " time(s). Pressed Key: " + pressedKey);
+
+        // Now, send the xTriggered value and pressedKey to the server
+        $.ajax({
+            type: 'POST',
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify({'xTriggered': xTriggered, 'pressedKey': pressedKey}),
+            dataType: 'json',
+            url: '/process_data',
+            success: function (data) {
+                console.log('Server Response:', data);
             }
-            xTriggered++;
-            var pressedKey = String.fromCharCode(event.which);
-            console.log("Handler for `keydown` called " + xTriggered + " time(s). Pressed Key: " + pressedKey);
-
-            // Now, send the xTriggered value and pressedKey to the server
-            $.ajax({
-                type: 'POST',
-                contentType: 'application/json;charset=UTF-8',
-                data: JSON.stringify({'xTriggered': xTriggered, 'pressedKey': pressedKey}),
-                dataType: 'json',
-                url: '/process_data',
-                success: function (data) {
-                    console.log('Server Response:', data);
-                }
-            });
         });
+    });
 
-        // Add code to handle controller input
-        window.addEventListener("gamepadconnected", function(e) {
-            var gamepad = e.gamepad;
-            console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
-                        gamepad.index, gamepad.id,
-                        gamepad.buttons.length, gamepad.axes.length);
+    // Check gamepad support
+    if ('getGamepads' in navigator) {
+        // Set the dead zone threshold
+        var threshold = 0.2;
 
-            // Handle button presses and analog stick input
-            window.setInterval(function() {
-                var buttons = navigator.getGamepads()[0].buttons;
-                buttons.forEach(function(button, index) {
-                    if (button.pressed) {
-                        // Send button index to the server
-                        $.ajax({
-                            type: 'POST',
-                            contentType: 'application/json;charset=UTF-8',
-                            data: JSON.stringify({'buttonIndex': index}),
-                            dataType: 'json',
-                            url: '/process_controller_button',
-                            success: function (data) {
-                                console.log('Server Response:', data);
-                            }
-                        });
-                    }
-                });
+        // Start the gamepad detection loop
+        window.setInterval(function () {
+            var gamepads = navigator.getGamepads();
 
-                // Assuming the first two axes represent the analog stick (adjust as needed)
-                var xAxis = gamepad.axes[0];
-                var threshold = 0.2;
+            for (var i = 0; i < gamepads.length; i++) {
+                var gamepad = gamepads[i];
 
-                // Check if the analog stick is moved to the right
-                if (xAxis > threshold) {
-                    // Send a request to the server to indicate turning right
-                    $.ajax({
-                        type: 'POST',
-                        contentType: 'application/json;charset=UTF-8',
-                        data: JSON.stringify({'turnDirection': 'right'}),
-                        dataType: 'json',
-                        url: '/process_turning',
-                        success: function (data) {
-                            console.log('Server Response:', data);
+                if (gamepad) {
+                    console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+                                gamepad.index, gamepad.id,
+                                gamepad.buttons.length, gamepad.axes.length);
+
+                    // Handle button presses
+                    gamepad.buttons.forEach(function (button, index) {
+                        if (button.pressed) {
+                            // Send button index to the server
+                            $.ajax({
+                                type: 'POST',
+                                contentType: 'application/json;charset=UTF-8',
+                                data: JSON.stringify({'buttonIndex': index}),
+                                dataType: 'json',
+                                url: '/process_controller_button',
+                                success: function (data) {
+                                    console.log('Server Response:', data);
+                                }
+                            });
                         }
                     });
+
+                    // Handle analog stick input with dead zone
+                    var xAxis = gamepad.axes[0];
+                    var yAxis = gamepad.axes[1];
+
+                    // Apply dead zone
+                    xAxis = Math.abs(xAxis) < threshold ? 0 : xAxis;
+                    yAxis = Math.abs(yAxis) < threshold ? 0 : yAxis;
+
+                    // Round to the 100th decimal place
+                    xAxis = Math.round(xAxis * 100) / 100;
+                    yAxis = Math.round(yAxis * 100) / 100;
+
+                    console.log('Analog Stick Values - X:', xAxis, 'Y:', yAxis);
                 }
-                // Check if the analog stick is moved to the left
-                else if (xAxis < -threshold) {
-                    // Send a request to the server to indicate turning left
-                    $.ajax({
-                        type: 'POST',
-                        contentType: 'application/json;charset=UTF-8',
-                        data: JSON.stringify({'turnDirection': 'left'}),
-                        dataType: 'json',
-                        url: '/process_turning',
-                        success: function (data) {
-                            console.log('Server Response:', data);
-                        }
-                    });
-                }
-            }, 100);
-        });
-    </script>
+            }
+        }, 100);
+    } else {
+        console.log('Gamepad not supported');
+    }
+</script>
+
+
+
+
 </body>
 </html>
 """
@@ -153,19 +153,20 @@ def process_controller_button():
 def process_turning():
     data = request.get_json()
 
-    if not data or 'turnDirection' not in data:
+    if not data or 'turnDirection' not in data or 'degree' not in data:
         return jsonify({'error': 'Invalid data format'})
 
     turn_direction = data.get('turnDirection', '')
+    degree = data.get('degree', 0)
 
-    # Handle turning based on the received direction
-    handle_turning(turn_direction)
+    # Handle turning based on the received direction and degree
+    handle_turning(turn_direction, degree)
 
-    response_data = {'message': f'Turning processed successfully! Turn Direction: {turn_direction}'}
-    print(response_data)
-    return jsonify(response_data)
+    return jsonify({'message': 'Success'})
 
-def motor_stop():
+def reset():
+    global autonomous
+    autonomous = False
     pass
 
 def autonomous_toggle(state):
@@ -178,16 +179,24 @@ def autonomous_toggle(state):
         autonomous = True
 
 def forward():
-    pass
+    if autonomous != True:
+        #movzies
+        pass
 
 def left(deg):
-    pass
+        if autonomous != True:
+
+           pass
 
 def right(deg):
-    pass
+        if autonomous != True:
+
+         pass
 
 def backwards():
-    pass
+        if autonomous != True:
+
+            pass
 
 def handle_keyboard_input(pressedKey):
     global autonomous
@@ -209,8 +218,8 @@ def handle_keyboard_input(pressedKey):
         autonomous_toggle(autonomous)
 
     elif pressedKey.lower() == "e":
-        print("stopping motors")
-        motor_stop()
+        print("resetting")
+        reset()
         # full motor stop
 
 def handle_controller_input(button_index):
@@ -225,20 +234,22 @@ def handle_controller_input(button_index):
         print("backwards")
         backwards()
     elif button_index == "10":
-        print("stopping motors")   
-        motor_stop()
+        print("resetting")   
+        reset()
     elif button_index == "11":
         print("autonomous")   
         autonomous_toggle(autonomous)
 
-def handle_turning(turn_direction):
-    # Handle turning based on the received direction
+def handle_turning(turn_direction, degree):
+    # Handle turning based on the received direction and degree
     global autonomous
     if turn_direction == 'right':
-        print('Turning right')
+        degree = round(degree, 2)  # Round to the 100th decimal place
+        print(f'Turning right at {degree} degrees')
         # Add your logic for turning right
     elif turn_direction == 'left':
-        print('Turning left')
+        degree = round(degree, 2)  # Round to the 100th decimal place
+        print(f'Turning left at {degree} degrees')
         # Add your logic for turning left
 
 if __name__ == '__main__':
