@@ -17,7 +17,7 @@ def index():
     <title>Input</title>
 </head>
 <body>
-    <h1>Input</h1>
+    <h1>wasd to move, e = full reset, q autonomous, for wheel, top left button = reset, top right button = autonomous</h1>
     <form id="dataForm">
         <fieldset>
             <label for="target">Type to Initialize:</label>
@@ -138,10 +138,11 @@ def process_data():
     handle_keyboard_input(pressedKey)
     #can remove but is currentlly for debug
     print(f'xTriggered: {xTriggered}, Pressed Key: {pressedKey}')
-
+    print("\n")
     response_data = {'message': f'Data processed successfully! xTriggered: {xTriggered}, Pressed Key: {pressedKey}'}
     #removed for lack of use
-    #print(response_data)  
+    #print(response_data)
+    #print("\n")  
     return jsonify(response_data)
 
 @app.route('/process_controller_button', methods=['POST'])
@@ -157,6 +158,7 @@ def process_controller_button():
 
     response_data = {'message': f'Controller button processed successfully! Button Index: {button_index}'}
     #print(response_data)
+    #print("\n")
     return jsonify(response_data)
 
 @app.route('/process_turning', methods=['POST'])
@@ -171,7 +173,9 @@ def process_turning():
     degree = abs(turn_direction)*360
     #currently keeping for debug
     print(degree)
+    print("\n")
     print(turn_direction)
+    print("\n")
     if turn_direction < 0:
         turn_direction = "left"
     elif turn_direction >0:
@@ -191,9 +195,11 @@ def autonomous_toggle(state):
     global autonomous
     if state:
         print("Stopping autonomous")
+        print("\n")
         reset()
     else:
         print("Starting autonomous")
+        print("\n")
         reset()
         autonomous = True
         #activate auto stuff 
@@ -228,22 +234,28 @@ def handle_keyboard_input(pressedKey):
     global autonomous
     if pressedKey.lower() == "a":
         print("moving left")
+        print("\n")
         left(10)
     elif pressedKey.lower() == "s":
         print("moving backward")
+        print("\n")
         backwards()
     elif pressedKey.lower() == "w":
         print("moving forward")
+        print("\n")
         forward()
     elif pressedKey.lower() == "d":
         print("moving right")
+        print("\n")
         right(10)
     elif pressedKey.lower() == "q":
         print("toggling autonomous")
+        print("\n")
         autonomous_toggle(autonomous)
 
     elif pressedKey.lower() == "e":
         print("resetting")
+        print("\n")
         reset()
         # full motor stop
 
@@ -251,17 +263,22 @@ def handle_controller_input(button_index):
     global autonomous
     #buttons wow
     print(f'Button pressed: {button_index}')
+    print("\n")
     if button_index == 7:
         print("moving forward")
+        print("\n")
         forward()
     elif button_index == 6:
         print("moving backwards")
+        print("\n")
         backwards()
     elif button_index == 10:
         print("resetting")   
+        print("\n")
         reset()
     elif button_index == 11:
         print("toggling autonomous")   
+        print("\n")
         autonomous_toggle(autonomous)
 
 def handle_turning(turn_direction, degree):
@@ -271,10 +288,12 @@ def handle_turning(turn_direction, degree):
     if turn_direction == 'right':
         degree = round(degree, 2)  
         print(f'Turning right at {degree} degrees')
+        print("\n")
         right(degree)
     elif turn_direction == 'left':
         degree = round(degree, 2)  # round 2 places
         print(f'Turning left at {degree} degrees')
+        print("\n")
         left(degree)
 
 if __name__ == '__main__':
