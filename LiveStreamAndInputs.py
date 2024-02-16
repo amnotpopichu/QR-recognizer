@@ -1,31 +1,39 @@
 from flask import Flask, request, jsonify, render_template, Response
-
+import logging
 from flask_cors import CORS
 import cv2
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "OPTIONS"])
-
+#for removing ip logs
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 xTriggered = 0  
 autonomous = False
 camera_id = 0
 delay = 1
-corner1x=200
-corner1y=200
-corner2x=500
-corner2y=500
+qcd = cv2.QRCodeDetector()
+cap = cv2.VideoCapture(camera_id)
+success, frame = cap.read()
+height, width, channels = frame.shape
+#make this thing do stuff using height and width
+sizex = int(width)//4
+sizey= sizex
+startx = (int(width)//2)-(sizex//2)
+starty = (int(height)//2)-(sizex//2)+int(height)//5
+corner1x=startx
+corner1y=starty
+corner2x=startx+sizex
+corner2y=starty+sizex
 margin=(corner2x-corner1x)/10
 targetcenterx=(corner1x+corner2x)/2
 targetcentery=(corner1y+corner2y)/2
-qcd = cv2.QRCodeDetector()
-cap = cv2.VideoCapture(camera_id)
-
 def gen_frames():  # generate frame by frame from camera
     global margin, corner1x, corner1y, corner2x, corner2y
     while True:
 
         success, frame = cap.read()  # read the camera frame
-        height, width, channels = frame.shape
-        print(f"Resolution: {width}x{height}")
+        
+        
         if not success:
             break
         else:
@@ -160,8 +168,8 @@ def index():
 //check if controllers exist
     if ('getGamepads' in navigator) {
         // Set the dead zone threshold
-        var threshold = 0.2;
-
+        //var threshold = 0.2;
+        var threshold = 0;
         
         window.setInterval(function () {
             var gamepads = navigator.getGamepads();
@@ -243,9 +251,9 @@ def process_data():
 
     #keyboard input
     handle_keyboard_input(pressedKey)
-    #can remove but is currentlly for debug
-    print(f'xTriggered: {xTriggered}, Pressed Key: {pressedKey}')
-    print("\n")
+    #currently removed
+    #print(f'xTriggered: {xTriggered}, Pressed Key: {pressedKey}')
+    #print("\n")
     response_data = {'message': f'Data processed successfully! xTriggered: {xTriggered}, Pressed Key: {pressedKey}'}
     #removed for lack of use
     #print(response_data)
@@ -284,10 +292,12 @@ def process_turning():
     turn_direction = data.get('xAxis', '')
     degree = abs(turn_direction)*360
     #currently keeping for debug
+    '''
     print(degree)
     print("\n")
     print(turn_direction)
     print("\n")
+    '''
     if turn_direction < 0:
         turn_direction = "left"
     elif turn_direction >0:
@@ -398,16 +408,19 @@ def handle_turning(turn_direction, degree):
     #turn direction = left/right
     #deg = how many deg in that direciton
     if turn_direction == 'right':
-        degree = round(degree, 2)  
+        degree = round(degree, 5)  
         print(f'Turning right at {degree} degrees')
         print("\n")
         right(degree)
     elif turn_direction == 'left':
-        degree = round(degree, 2)  # round 2 places
+        degree = round(degree, 5)  # round 5 places
         print(f'Turning left at {degree} degrees')
         print("\n")
         left(degree)
 
 if __name__ == '__main__':
-    #app.run(host='0.0.0.0', debug=True)
-    app.run(debug = True)
+    #use at home
+    app.run(host='0.0.0.0', debug=True)
+
+    #use at nueva
+    #app.run(debug = True)
