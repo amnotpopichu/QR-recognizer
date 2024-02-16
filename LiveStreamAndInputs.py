@@ -4,6 +4,10 @@ from flask_cors import CORS
 import cv2
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "OPTIONS"])
+#set strafing mode to false
+#speed = maxspeed
+strafe = False
+input = "Manual"
 #for removing ip logs
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -27,10 +31,12 @@ corner2y=starty+sizex
 margin=(corner2x-corner1x)/10
 targetcenterx=(corner1x+corner2x)/2
 targetcentery=(corner1y+corner2y)/2
+movex = 0
+movey = 0
+detection = False
 def gen_frames():  # generate frame by frame from camera
-    global margin, corner1x, corner1y, corner2x, corner2y
+    global margin, corner1x, corner1y, corner2x, corner2y, movex, movey, detection, input
     while True:
-
         success, frame = cap.read()  # read the camera frame
         
         
@@ -64,7 +70,8 @@ def gen_frames():  # generate frame by frame from camera
                     values = p.astype(int)
                     centerx = ((int(values[0][0]) + int(values[1][0]))) / 2
                     centery = ((int(values[0][1]) + int(values[3][1]))) / 2
-
+                    movex = targetcenterx - centerx
+                    movey = targetcentery-centery
                     if targetcenterx - centerx < -margin:
                         text = "move left"
                     elif targetcenterx - centerx > margin:
@@ -78,10 +85,13 @@ def gen_frames():  # generate frame by frame from camera
                         text = "move up"
                     elif targetcentery-centery > margin:
                         text = "move down"
+                        #move forward
                     else:
                         text = "center y value aligned"
                     #y value move
                     frame = cv2.putText(frame, text, (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                    
+                    frame = cv2.putText(frame, input, (400, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
                     #center of qr box
                     frame = cv2.rectangle(frame, (int(centerx),int(centery)), (int(centerx)+10,int(centery)+10), color=(255, 0, 0), thickness=10)
@@ -111,9 +121,11 @@ def gen_frames():  # generate frame by frame from camera
 
                     #shows qr code polygon
                     frame = cv2.polylines(frame, [p.astype(int)], True, color, 8)
+                detection=True
             else:
                 frame = cv2.putText(frame, "qr code not detected", (200, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),
                                     2, cv2.LINE_AA)
+                detection=False
 
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
@@ -132,7 +144,7 @@ def index():
     <title>Input</title>
 </head>
 <body>
-    <h1>wasd to move, e = full reset, q autonomous, for wheel, top left button = reset, top right button = autonomous</h1>
+    <h1>wasd to move, e = full reset, q autonomous, r for enable/disable strafe, for wheel, top left button = reset, top right button = autonomous, and button "A" = strafe</h1>
     <form id="dataForm">
         <fieldset>
             <label for="target">Type to Initialize:</label>
@@ -308,119 +320,188 @@ def process_turning():
     return jsonify({'message': 'Success'})
 
 def reset():
+    global input
+    global strafe
     global autonomous
     autonomous = False
-    #motor stop
+    strafe = False
+    input = "Manual"
+    print("motors stopped, autonomous and strafe are now false.")
+    #FrontLeft = 0
+    #FrontRight = 0
+    #RearLeft = 0
+    #RearRight = 0
     pass
-
+def runautonomous():
+    global movex, detection, movey,margin
+    while detection == True:
+        if movex<=-margin:
+            right(240)
+        elif movex>=margin:
+            left(240)
+        if -margin<=movex<=margin:
+            if movey<=-margin:
+                forward()
+            elif movey>=margin:
+                backwards()
 def autonomous_toggle(state):
-    global autonomous
-    if state:
-        print("Stopping autonomous")
+    global input
+    global autonomous, strafe
+    if autonomous == True:
+        print("Stopping autonomous and setting strafe to true")
         print("\n")
         reset()
+        autonomous = False
+        
+
     else:
         print("Starting autonomous")
+        strafe = True
         print("\n")
-        reset()
         autonomous = True
+        input = "Autonomous"
         #activate auto stuff 
 
 def forward():
     global autonomous
-    if autonomous != True:
-        #all motors forward
-        pass
+    #FrontLeft = speed
+    #FrontRight = speed
+    #RearLeft = speed
+    #RearRight = speed
+    pass
 
 def left(deg):
+    speed = deg/360
+    #speed*=motormaxspeed
+    global strafe
     global autonomous
-    if autonomous != True:
-        #right motors full forward
-        #left motors full backward (time based on angles)
+    if strafe == True:
+        #FrontLeft = -speed
+        #FrontRight = speed
+        #RearLeft = speed
+        #RearRight = -speed
+        pass
+    else:
+        #FrontLeft=-speed
+        #FrontRight=speed
+        #RearLeft=-speed
+        #Rearright=speed
         pass
 
 def right(deg):
+    speed = deg/360
+    #speed*=motormaxspeed
+
+    global strafe
     global autonomous
-    if autonomous != True:
-        #right motors full back
-        #left motors full forward (time based on angles)
+    if strafe == True:
+        #FrontLeft = speed
+        #FrontRight = -speed
+        #RearLeft = -speed
+        #RearRight = speed
+        pass
+    else:
+        #FrontLeft=speed
+        #FrontRight=-speed
+        #RearLeft=speed
+        #Rearright=-speed
         pass
 
 def backwards():
     global autonomous
-    if autonomous != True:
-        #all motors backward
-        pass
+    #FrontLeft = -speed
+    #FrontRight = -speed
+    #RearLeft = -speed
+    #RearRight = -speed
+    pass
 
+def strafe():
+    global strafe
+    if strafe == True:
+        strafe = False
+    else:
+        strafe == True
+    pass
 def handle_keyboard_input(pressedKey):
     global autonomous
-    if pressedKey.lower() == "a":
-        print("moving left")
-        print("\n")
-        left(10)
-    elif pressedKey.lower() == "s":
-        print("moving backward")
-        print("\n")
-        backwards()
-    elif pressedKey.lower() == "w":
-        print("moving forward")
-        print("\n")
-        forward()
-    elif pressedKey.lower() == "d":
-        print("moving right")
-        print("\n")
-        right(10)
-    elif pressedKey.lower() == "q":
+    #ingore inputs if its autonomous
+    if autonomous!=True:
+        if pressedKey.lower() == "a":
+            print("moving left")
+            print("\n")
+            left(60)
+        elif pressedKey.lower() == "s":
+            print("moving backward")
+            print("\n")
+            backwards()
+        elif pressedKey.lower() == "w":
+            print("moving forward")
+            print("\n")
+            forward()
+        elif pressedKey.lower() == "d":
+            print("moving right")
+            print("\n")
+            right(60)
+    if pressedKey.lower() == "q":
         print("toggling autonomous")
         print("\n")
         autonomous_toggle(autonomous)
 
-    elif pressedKey.lower() == "e":
+    if pressedKey.lower() == "e":
         print("resetting")
         print("\n")
         reset()
         # full motor stop
-
+    if pressedKey.lower() == "r":
+        print("toggling strafing")
+        print("\n")
+        strafe()
 def handle_controller_input(button_index):
     global autonomous
     #buttons wow
     print(f'Button pressed: {button_index}')
     print("\n")
-    if button_index == 7:
-        print("moving forward")
-        print("\n")
-        forward()
-    elif button_index == 6:
-        print("moving backwards")
-        print("\n")
-        backwards()
-    elif button_index == 10:
+    if autonomous!=True:
+        if button_index == 7:
+            print("moving forward")
+            print("\n")
+            forward()
+        elif button_index == 6:
+            print("moving backwards")
+            print("\n")
+            backwards()
+    if button_index == 10:
         print("resetting")   
         print("\n")
         reset()
-    elif button_index == 11:
+    if button_index == 11:
         print("toggling autonomous")   
         print("\n")
         autonomous_toggle(autonomous)
+    if button_index == 0:
+        print("toggling strafe")
+        print("\n")
+        strafe()
 
 def handle_turning(turn_direction, degree):
     global autonomous
     #turn direction = left/right
     #deg = how many deg in that direciton
-    if turn_direction == 'right':
-        degree = round(degree, 5)  
-        print(f'Turning right at {degree} degrees')
-        print("\n")
-        right(degree)
-    elif turn_direction == 'left':
-        degree = round(degree, 5)  # round 5 places
-        print(f'Turning left at {degree} degrees')
-        print("\n")
-        left(degree)
+    if autonomous!=True:
+        if turn_direction == 'right':
+            degree = round(degree, 5)  
+            print(f'Turning right at {degree} degrees')
+            print("\n")
+            right(degree)
+        elif turn_direction == 'left':
+            degree = round(degree, 5)  # round 5 places
+            print(f'Turning left at {degree} degrees')
+            print("\n")
+            left(degree)
 
 if __name__ == '__main__':
     #use at home
-    app.run(host='0.0.0.0', debug=True)
+    #app.run(host='0.0.0.0', debug=True)
 
     #use at nueva
-    #app.run(debug = True)
+    app.run(debug = True)
