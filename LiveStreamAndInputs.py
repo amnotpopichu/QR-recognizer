@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template, Response
 import logging
 from flask_cors import CORS
+import numpy as np
 import cv2
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "OPTIONS"])
@@ -13,17 +14,13 @@ log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 xTriggered = 0  
 autonomous = False
-camera_id = 0
 delay = 1
-qcd = cv2.QRCodeDetector()
-cap = cv2.VideoCapture(camera_id)
-success, frame = cap.read()
-height, width, channels = frame.shape
-#make this thing do stuff using height and width
+width, height = 652, 366
 sizex = int(width)//4
 sizey= sizex
 startx = (int(width)//2)-(sizex//2)
 starty = (int(height)//2)-(sizex//2)+int(height)//5
+
 corner1x=startx
 corner1y=starty
 corner2x=startx+sizex
@@ -34,15 +31,67 @@ targetcentery=(corner1y+corner2y)/2
 movex = 0
 movey = 0
 detection = False
+import RPi.GPIO as GPIO
+
+# Set pin numbering mode (choose one)
+GPIO.setmode(GPIO.BCM)
+# GPIO.setmode(GPIO.BOARD)
+
+class MotorController:
+    def __init__(self, in1, in2, en):
+        print(self)
+        self.in1 = in1
+        self.in2 = in2
+        self.en = en
+        GPIO.setup(self.in1, GPIO.OUT)
+        GPIO.setup(self.in2, GPIO.OUT)
+        GPIO.setup(self.en, GPIO.OUT)
+        self.pwm = GPIO.PWM(self.en, 1000)
+        self.pwm.start(25)
+        
+    def backward(self):
+        print(self)
+        GPIO.output(self.in1, GPIO.HIGH)
+        GPIO.output(self.in2, GPIO.LOW)
+
+    def forward(self):
+        print(self)
+        GPIO.output(self.in1, GPIO.LOW)
+        GPIO.output(self.in2, GPIO.HIGH)
+
+    def stop(self):
+        print(self)
+        GPIO.output(self.in1, GPIO.LOW)
+        GPIO.output(self.in2, GPIO.LOW)
+
+# Define GPIO pins for front left motor
+fr_pins = {'in1': 24, 'in2': 23, 'en': 2}
+fl_pins = {'in1': 22, 'in2': 27, 'en': 3}
+br_pins = {'in1': 6, 'in2': 5, 'en': 14}
+bl_pins = {'in1': 16, 'in2': 26, 'en': 15}
+
+# Initialize motor controller for front left motor
+fl = MotorController(**fl_pins)
+print("2")
+fr = MotorController(**fr_pins)
+print("2")
+bl = MotorController(**bl_pins)
+print("2")
+br = MotorController(**br_pins)
+
 def gen_frames():  # generate frame by frame from camera
+    qcd = cv2.QRCodeDetector()
+    cap = cv2.VideoCapture(0)
     global margin, corner1x, corner1y, corner2x, corner2y, movex, movey, detection, input
     while True:
+        runautonomous()
+
         success, frame = cap.read()  # read the camera frame
         
         
         if not success:
             break
-        else:
+        else: 
             ret_qr, decoded_info, points, _ = qcd.detectAndDecodeMulti(frame)
             #frame = cv2.rectangle(frame, (corner1x+50, corner1y+50), (corner2x-50, corner2y-50), (0, 0, 255), 8)
             fraction = 1/6  
@@ -65,6 +114,7 @@ def gen_frames():  # generate frame by frame from camera
             frame = cv2.rectangle(frame, (corner1x, corner1y), (corner2x, corner2y), (0, 0, 255), 8)
 
             if ret_qr:
+
                 for s, p in zip(decoded_info, points):
                     color = (0, 255, 0)
                     values = p.astype(int)
@@ -253,7 +303,6 @@ def process_data():
 
     global xTriggered, autonomous
     data = request.get_json()
-
     if not data or 'xTriggered' not in data or 'pressedKey' not in data:
         return jsonify({'error': 'Invalid data format'})
     
@@ -327,23 +376,43 @@ def reset():
     strafe = False
     input = "Manual"
     print("motors stopped, autonomous and strafe are now false.")
-    #FrontLeft = 0
-    #FrontRight = 0
-    #RearLeft = 0
-    #RearRight = 0
+    fl.stop()
+    fr.stop()
+    br.stop()
+    bl.stop()
     pass
+import time
 def runautonomous():
-    global movex, detection, movey,margin
-    while detection == True:
-        if movex<=-margin:
-            right(240)
-        elif movex>=margin:
-            left(240)
-        if -margin<=movex<=margin:
-            if movey<=-margin:
-                forward()
-            elif movey>=margin:
-                backwards()
+    global movex, detection, movey,margin, autonomous
+    if autonomous == True:
+        print("moveyayauto")
+        if detection == True:
+            if movex<=-margin:
+                right(3)
+                print("autoright")
+            elif movex>=margin:
+                left(3)
+                print("autoleft")
+            if -margin<=movex<=margin:
+                if movey>=-margin:
+                    forward()
+                    time.sleep(movey/25)
+                    movey=0
+                    fl.stop()
+                    fr.stop()
+                    br.stop()
+                    bl.stop()
+                    print("autoforward")
+                elif movey<=margin:
+                    backwards()
+                    print("autoback")
+        else:
+            fl.stop()
+            fr.stop()
+            br.stop()
+            bl.stop() 
+    else:
+        pass
 def autonomous_toggle(state):
     global input
     global autonomous, strafe
@@ -360,14 +429,13 @@ def autonomous_toggle(state):
         print("\n")
         autonomous = True
         input = "Autonomous"
-        #activate auto stuff 
-
+        print("im runing wooo")
 def forward():
     global autonomous
-    #FrontLeft = speed
-    #FrontRight = speed
-    #RearLeft = speed
-    #RearRight = speed
+    fl.forward()
+    fr.forward()
+    br.forward()
+    bl.forward()
     pass
 
 def left(deg):
@@ -376,16 +444,18 @@ def left(deg):
     global strafe
     global autonomous
     if strafe == True:
-        #FrontLeft = -speed
-        #FrontRight = speed
-        #RearLeft = speed
-        #RearRight = -speed
+        print("strafe :)")
+        fl.backward()
+        bl.forward()
+        fr.forward()
+        br.backward()
         pass
     else:
-        #FrontLeft=-speed
-        #FrontRight=speed
-        #RearLeft=-speed
-        #Rearright=speed
+        print("no strafe :(")
+        fr.forward()
+        br.forward()
+        fl.backward()
+        bl.backward()
         pass
 
 def right(deg):
@@ -395,33 +465,35 @@ def right(deg):
     global strafe
     global autonomous
     if strafe == True:
-        #FrontLeft = speed
-        #FrontRight = -speed
-        #RearLeft = -speed
-        #RearRight = speed
+        print("strafe :)")
+        fl.forward()
+        bl.backward()
+        fr.backward()
+        br.forward()
         pass
     else:
-        #FrontLeft=speed
-        #FrontRight=-speed
-        #RearLeft=speed
-        #Rearright=-speed
+        print("no strafe :(")
+        fl.forward()
+        bl.forward()
+        fr.backward()
+        br.backward()
         pass
 
 def backwards():
     global autonomous
-    #FrontLeft = -speed
-    #FrontRight = -speed
-    #RearLeft = -speed
-    #RearRight = -speed
+    fl.backward()
+    bl.backward()
+    fr.backward()
+    br.backward()
     pass
 
-def strafe():
+def functionstrafe():
     global strafe
     if strafe == True:
         strafe = False
     else:
-        strafe == True
-    pass
+        strafe = True
+    
 def handle_keyboard_input(pressedKey):
     global autonomous
     #ingore inputs if its autonomous
@@ -455,7 +527,7 @@ def handle_keyboard_input(pressedKey):
     if pressedKey.lower() == "r":
         print("toggling strafing")
         print("\n")
-        strafe()
+        functionstrafe()
 def handle_controller_input(button_index):
     global autonomous
     #buttons wow
@@ -481,7 +553,7 @@ def handle_controller_input(button_index):
     if button_index == 0:
         print("toggling strafe")
         print("\n")
-        strafe()
+        functionstrafe()
 
 def handle_turning(turn_direction, degree):
     global autonomous
@@ -501,7 +573,7 @@ def handle_turning(turn_direction, degree):
 
 if __name__ == '__main__':
     #use at home
-    #app.run(host='0.0.0.0', debug=True)
-
+    app.run(host='0.0.0.0', debug=True)
+    
     #use at nueva
-    app.run(debug = True)
+    #app.run(debug = True, port=5500)

@@ -21,6 +21,7 @@ targetcenterx=(corner1x+corner2x)/2
 targetcentery=(corner1y+corner2y)/2
 qcd = cv2.QRCodeDetector()
 cap = cv2.VideoCapture(camera_id)
+
 while True:
     ret, frame = cap.read()
 
