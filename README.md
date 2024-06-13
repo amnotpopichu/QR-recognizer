@@ -9,3 +9,5 @@ Technical parts and comments:
 To host the website on 0.0.0.0 on my network, I had to use the command ifconfig, and used the ip address listed under inet, which should be entered on another computer or device. 
 
 One note is the constant need to unplug and plug back in the camera. One reason I could suspect is low voltage, or possibly this isn't the right camera for the job, and it was more forced.
+
+PS: If you want the final code its LiveStreamAndInputs.py, and if you want QR recognizer it will be under QrCodeLocation
